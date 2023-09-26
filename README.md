@@ -1,58 +1,54 @@
+# README
 
-# Welcome to your CDK Python project!
+## Overview
 
-This is a blank project for CDK development with Python.
+This repository provides a systematic way to handle extra dependencies for AWS Glue Jobs, allowing users to bundle additional Python files and modules into a zip file, which is then uploaded to an Amazon S3 bucket. These extra files can contain utility functions, custom libraries, or any other code that your Glue job requires to run.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## Preparing Your Dependencies
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+1. **Creating the Extras Directory:**  
+   Create a directory named `assets` at the root level of your project. Inside the `assets` directory, create another directory named `extras`. This is where you will place all the extra files and modules that your Glue job will need.
+   
+    ```plaintext
+    project-root-directory/
+    └── assets/
+        └── extras/
+    ```
 
-To manually create a virtualenv on MacOS and Linux:
+2. **Adding Your Files:**  
+   Place your extra files and modules inside the `extras` directory. This could include utility files like a log helper, a DynamoDB service module, a custom data processing library, or any other Python scripts your Glue job needs.
 
-```
-$ python3 -m venv .venv
-```
+## Configuring Your CDK Stack
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+The `ExtraFileGlueJobTestStack` class in your CDK stack script handles the orchestration of zipping up your extra dependencies, uploading them to S3, and configuring your Glue job to use these extras. Here's an outline of how it's structured:
 
-```
-$ source .venv/bin/activate
-```
+1. **Role Creation:**  
+   A role for the Glue job is created with necessary permissions.
 
-If you are a Windows platform, you would activate the virtualenv like this:
+2. **Bucket Creation:**  
+   An S3 bucket is created to hold your Glue job script and extra dependencies.
 
-```
-% .venv\Scripts\activate.bat
-```
+3. **Zipping Extras:**  
+   The `zip_glue_dependencies` function is called to zip up everything in the `assets/extras` directory.
 
-Once the virtualenv is activated, you can install the required dependencies.
+4. **Uploading to S3:**  
+   The zipped extras and your Glue job script are uploaded to the S3 bucket using the `BucketDeployment` construct.
 
-```
-$ pip install -r requirements.txt
-```
+5. **Glue Job Creation:**  
+   A Glue job is created with the necessary configurations to use the zipped extras from S3.
 
-At this point you can now synthesize the CloudFormation template for this code.
+```python
+class ExtraFileGlueJobTestStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
 
-```
-$ cdk synth
-```
+        # ... (rest of your code)
 
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
+        # Ensure the zip_util module is importable
+        sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+        import zip_util
 
-## Useful commands
+        # Zip the extras and get import instructions
+        zip_util.zip_glue_dependencies(bucket_name=bucket_name)
 
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
-
-Enjoy!
+        # ... (rest of your code)
