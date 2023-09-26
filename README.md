@@ -1,4 +1,4 @@
-# Glue Extra Files
+# Glue Extra Python Files
 
 A quick sample for how to add and import "extra files" (i.e. other classes, utilities) to Glue jobs. Some values are hardcoded
 
